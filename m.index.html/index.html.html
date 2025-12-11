@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Μαθαίνω Μαθηματικά</title>
+  <style>
+    /* ===== ΒΑΣΙΚΟ BODY ΧΩΡΙΣ BACKGROUND ΕΔΩ ===== */
+    body {
+      font-family: 'Comic Sans MS', cursive;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* ===== BACKGROUND ΓΙΑ ΚΑΘΕ ΕΠΙΠΕΔΟ ===== */
+
+    /* Εύκολο – πολύ παιδικό */
+    body.easy-bg {
+      background-image: url('https://i.pinimg.com/736x/a7/a2/7c/a7a27c330a86a4bec9a2db3f46b453c0.jpg');
+      background-size:100% 100%;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    /* Μεσαίο – normal */
+    body.medium-bg {
+      background-image: url('https://i.pinimg.com/1200x/da/49/96/da4996041b4e0b5e119b2b3e5459a1f0.jpg');
+      background-size: 100% 100%;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    /* Δύσκολο – για λίγο μεγαλύτερα παιδιά */
+    body.hard-bg {
+      background-image: url('https://i.pinimg.com/1200x/3c/d8/f8/3cd8f863d67757d2f3eb6fb1f819989e.jpg');
+      background-size: 100% 100%;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    /* ===== ΤΑ ΥΠΟΛΟΙΠΑ ΣΤΥΛ ΠΑΡΑΜΕΝΟΥΝ ΙΔΙΑ ===== */
+
+    .container {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
+    }
+    h1 {
+      color: #3b945e;
+    }
+    select, button {
+      font-family: inherit;
+      margin: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    select {
+      background-color: #f1f1f1;
+    }
+    button {
+      background-color: #3b945e;
+      color: white;
+    }
+    button:hover {
+      background-color: #2a7a4b;
+    }
+    .question-box {
+      font-size: 1.4em;
+      margin: 20px 0;
+    }
+    .option {
+      background-color: #d9fdd3;
+      border: 2px solid #a2d5a1;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .option:hover {
+      background-color: #b8f2c9;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+    .emoji {
+      font-size: 2em;
+      margin-top: 10px;
+    }
+    .score-board {
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Μαθαίνω Μαθηματικά!</h1>
+    <div class="score-board" id="scoreBoard"></div>
+
+    <label for="difficulty">Επίλεξε επίπεδο:</label>
+    <select id="difficulty">
+      <option value="easy">Εύκολο</option>
+      <option value="medium">Μεσαίο</option>
+      <option value="hard">Δύσκολο</option>
+    </select>
+
+    <div id="root"></div>
+  </div>
+  <audio id="correctSound" src="c:\Users\Πάνος\Music\Correct Answer Sound Effect.mp3"></audio>
+  <audio id="wrongSound" src="c:\Users\Πάνος\Music\Wrong Answer Sound effect.mp3"></audio>
+
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function generateMathQuestions(level) {
+      const operators = ['+', '-', '×', '÷'];
+      const questions = [];
+      const max = level === 'easy' ? 10 : level === 'medium' ? 30 : 100;
+
+      while (questions.length < 10) {
+        let num1 = Math.floor(Math.random() * max) + 1;
+        let num2 = Math.floor(Math.random() * max) + 1;
+        let op = operators[Math.floor(Math.random() * operators.length)];
+        let question, answer;
+
+        switch (op) {
+          case '+':
+            question = `${num1} + ${num2} = ?`;
+            answer = num1 + num2;
+            break;
+          case '-':
+            if (num1 < num2) [num1, num2] = [num2, num1];
+            question = `${num1} - ${num2} = ?`;
+            answer = num1 - num2;
+            break;
+          case '×':
+            question = `${num1} × ${num2} = ?`;
+            answer = num1 * num2;
+            break;
+          case '÷':
+            answer = Math.floor(Math.random() * max) + 1;
+            num2 = Math.floor(Math.random() * max) + 1;
+            num1 = answer * num2;
+            question = `${num1} ÷ ${num2} = ?`;
+            break;
+        }
+
+        const options = new Set();
+        options.add(answer);
+        while (options.size < 4) {
+          const fake = answer + Math.floor(Math.random() * 10) - 5;
+          if (fake !== answer && fake >= 0) options.add(fake);
+        }
+
+        questions.push({
+          question,
+          options: Array.from(options).sort(() => 0.5 - Math.random()),
+          answer
+        });
+      }
+
+      return questions;
+    }
+
+    function App() {
+      const [level, setLevel] = useState("easy");
+      const [questions, setQuestions] = useState(generateMathQuestions("easy"));
+      const [current, setCurrent] = useState(0);
+      const [score, setScore] = useState(0);
+      const [showResult, setShowResult] = useState(false);
+      const [totalScore, setTotalScore] =
+        useState(parseInt(localStorage.getItem("mathTotalScore")) || 0);
+
+      // Ενημέρωση του συνολικού σκορ στο πάνω μέρος
+      useEffect(() => {
+        document.getElementById("scoreBoard").textContent =
+          `Συνολικό σκορ: ${totalScore}`;
+      }, [totalScore]);
+
+      // Όταν αλλάζει το dropdown "Επίλεξε επίπεδο", ενημερώνουμε το state "level"
+      useEffect(() => {
+        const select = document.getElementById("difficulty");
+
+        const handleChange = (e) => {
+          const newLevel = e.target.value; // "easy", "medium", "hard"
+          setLevel(newLevel);
+          // Προαιρετικά: φτιάχνουμε αμέσως νέες ερωτήσεις για αυτό το επίπεδο
+          setQuestions(generateMathQuestions(newLevel));
+          setCurrent(0);
+          setScore(0);
+          setShowResult(false);
+        };
+
+        if (select) {
+          select.addEventListener("change", handleChange);
+          // Αρχική τιμή
+          setLevel(select.value);
+        }
+
+        return () => {
+          if (select) select.removeEventListener("change", handleChange);
+        };
+      }, []);
+
+      // Κάθε φορά που αλλάζει το level → αλλάζει και η κλάση του body → άλλο background
+      useEffect(() => {
+        const body = document.body;
+        body.classList.remove("easy-bg", "medium-bg", "hard-bg");
+        body.classList.add(`${level}-bg`);
+      }, [level]);
+
+      const playSound = (correct) => {
+        const sound = document.getElementById(correct ? "correctSound" : "wrongSound");
+        sound.currentTime = 0;
+        sound.play();
+      };
+
+      const handleAnswer = (option) => {
+        if (option === questions[current].answer) {
+          setScore(prev => prev + 1);
+          setTotalScore(prev => {
+            const newScore = prev + 1;
+            localStorage.setItem("mathTotalScore", newScore);
+            return newScore;
+          });
+          playSound(true);
+        } else {
+          playSound(false);
+        }
+
+        if (current < 9) {
+          setCurrent(current + 1);
+        } else {
+          setShowResult(true);
+        }
+      };
+
+      const restart = () => {
+        // Ξαναφτιάχνουμε ερωτήσεις για το τρέχον level
+        setQuestions(generateMathQuestions(level));
+        setCurrent(0);
+        setScore(0);
+        setShowResult(false);
+      };
+
+      const getEmojiReward = (score) => {
+        if (score === 10) return "🏆🥳 Συγχαρητήρια! Τέλειο σκορ!";
+        if (score >= 8) return "🎉 Πολύ καλά!";
+        if (score >= 5) return "👍 Καλή προσπάθεια!";
+        return "😅 Ξαναπροσπάθησε!";
+      };
+
+      return (
+        <div>
+          {showResult ? (
+            <div className="result">
+              <p>Το σκορ σου: {score} / 10</p>
+              <div className="emoji">{getEmojiReward(score)}</div>
+              <button onClick={restart}>Νέο κουίζ</button>
+            </div>
+          ) : (
+            <div>
+              <div className="question-box">
+                Ερώτηση {current + 1} / 10: {questions[current].question}
+              </div>
+              {questions[current].options.map((opt, i) => (
+                <div
+                  key={i}
+                  className="option"
+                  onClick={() => handleAnswer(opt)}
+                >
+                  {opt}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
